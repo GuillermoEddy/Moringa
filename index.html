@@ -2,14 +2,21 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Red Social</title>
+  <title>Mini Red Social Completa</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; }
+    textarea { width: 100%; height: 50px; }
+    input, textarea, button { margin: 5px 0; }
+    .post, .mensaje { border: 1px solid #ccc; padding: 5px; margin: 5px 0; border-radius: 5px; }
+    #mensajesRecibidos li { list-style: none; margin: 5px 0; }
+  </style>
   <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
-  <h1>🚀 Mini Red Social</h1>
+  <h1>🚀 Mini Red Social Completa</h1>
 
   <!-- Registro/Login -->
   <div>
@@ -19,113 +26,154 @@
     <button onclick="login()">Login</button>
     <button onclick="logout()">Logout</button>
   </div>
-
   <p id="estado">No conectado</p>
 
-  <!-- Crear post -->
+  <!-- Posts -->
   <div id="postBox" style="display:none;">
+    <h2>Publicar un post</h2>
     <textarea id="mensaje" placeholder="Escribe un post..."></textarea>
     <button onclick="publicar()">Publicar</button>
+    <h2>Posts recientes</h2>
+    <ul id="posts"></ul>
   </div>
 
-  <!-- Lista de posts -->
-  <h2>Posts:</h2>
-  <ul id="posts"></ul>
+  <!-- Mensajes privados -->
+  <div id="mensajesBox" style="display:none;">
+    <h2>Mensajes privados</h2>
+    <input type="email" id="paraEmail" placeholder="Email destinatario">
+    <textarea id="mensajePrivado" placeholder="Escribe tu mensaje..."></textarea>
+    <button onclick="enviarMensaje()">Enviar mensaje</button>
+
+    <h3>Mensajes recibidos</h3>
+    <ul id="mensajesRecibidos"></ul>
+  </div>
 
   <script>
-    // ⚡ Configuración de tu proyecto Firebase
+    // Configuración Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBpku94Ge1DGotBTLk-rYdY1zyQUvEYuMY",
       authDomain: "moringa-85b1f.firebaseapp.com",
       projectId: "moringa-85b1f",
-      storageBucket: "moringa-85b1f.appspot.com", // corregido
+      storageBucket: "moringa-85b1f.appspot.com",
       messagingSenderId: "40668368704",
       appId: "1:40668368704:web:142dabce23add5de39b4a5",
       measurementId: "G-G2LFXD4BTF"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // Referencias a elementos
     const estado = document.getElementById("estado");
     const postBox = document.getElementById("postBox");
+    const mensajesBox = document.getElementById("mensajesBox");
     const postsUl = document.getElementById("posts");
 
-    // 🔑 Registro
+    // 🔑 Registro/Login/Logout
     async function registrar() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
       try {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
         await auth.createUserWithEmailAndPassword(email, password);
         alert("Usuario registrado ✅");
-      } catch (err) {
-        alert("Error: " + err.message);
-      }
+      } catch(e) { alert(e.message); }
     }
 
-    // 🔑 Login
     async function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
       try {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
         await auth.signInWithEmailAndPassword(email, password);
         alert("Login exitoso ✅");
-      } catch (err) {
-        alert("Error: " + err.message);
-      }
+      } catch(e) { alert(e.message); }
     }
 
-    // 🔑 Logout
     function logout() {
       auth.signOut();
     }
 
     // 👀 Detectar usuario activo
     auth.onAuthStateChanged(user => {
-      if (user) {
+      if(user) {
         estado.textContent = "Conectado como: " + user.email;
         postBox.style.display = "block";
-        escucharPosts(); // activar listener de posts
+        mensajesBox.style.display = "block";
+        escucharPosts();
+        escucharMensajes(user.email);
       } else {
         estado.textContent = "No conectado";
         postBox.style.display = "none";
+        mensajesBox.style.display = "none";
         postsUl.innerHTML = "";
+        document.getElementById("mensajesRecibidos").innerHTML = "";
       }
     });
 
-    // ✍️ Publicar post
+    // ✍️ Posts públicos
     async function publicar() {
-      const mensaje = document.getElementById("mensaje").value;
-      if (mensaje.trim() === "") return;
-
+      const mensaje = document.getElementById("mensaje").value.trim();
+      if(!mensaje) return;
       const user = auth.currentUser;
-      if (!user) return alert("Debes estar logueado para publicar");
-
       await db.collection("posts").add({
         autor: user.email,
         mensaje: mensaje,
         fecha: firebase.firestore.FieldValue.serverTimestamp()
       });
-
       document.getElementById("mensaje").value = "";
     }
 
-    // 📡 Escuchar posts en tiempo real
     function escucharPosts() {
-      db.collection("posts").orderBy("fecha", "desc")
+      db.collection("posts").orderBy("fecha","desc")
         .onSnapshot(snapshot => {
           postsUl.innerHTML = "";
           snapshot.forEach(doc => {
             const post = doc.data();
             const li = document.createElement("li");
+            li.className = "post";
             li.textContent = `${post.autor}: ${post.mensaje}`;
             postsUl.appendChild(li);
           });
         });
     }
+
+    // ✉️ Mensajes privados
+    async function enviarMensaje() {
+      const de = auth.currentUser.email;
+      const para = document.getElementById("paraEmail").value.trim();
+      const contenido = document.getElementById("mensajePrivado").value.trim();
+      if(!para || !contenido) return alert("Completa todos los campos");
+
+      const docRef = await db.collection("messages").add({
+        de, para, contenido,
+        fecha: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      document.getElementById("mensajePrivado").value = "";
+
+      // Borrar mensaje automáticamente después de 5 minutos
+      setTimeout(async () => {
+        const snap = await docRef.get();
+        if(snap.exists) await docRef.delete();
+      }, 5*60*1000);
+    }
+
+    function escucharMensajes(emailUsuario) {
+      db.collection("messages")
+        .where("para","==",emailUsuario)
+        .orderBy("fecha","desc")
+        .onSnapshot(snapshot => {
+          const ul = document.getElementById("mensajesRecibidos");
+          ul.innerHTML = "";
+          snapshot.forEach(doc => {
+            const msg = doc.data();
+            const li = document.createElement("li");
+            li.className = "mensaje";
+            li.textContent = `${msg.de}: ${msg.contenido}`;
+            ul.appendChild(li);
+          });
+        });
+    }
+
   </script>
 </body>
 </html>
