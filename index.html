@@ -2,12 +2,65 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Red Social Completa - Mensajes Temporales</title>
+  <title>Mini Red Social Bonita</title>
   <style>
-    body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; }
-    input, textarea, button { margin: 5px 0; width: 100%; }
-    .post, .mensaje { border: 1px solid #ccc; padding: 5px; margin: 5px 0; border-radius: 5px; }
-    #mensajesRecibidos li { list-style: none; margin: 5px 0; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f0f2f5;
+      color: #333;
+    }
+
+    h1, h2, h3 { text-align: center; color: #444; }
+    
+    input, textarea, button {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 16px;
+    }
+
+    button {
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .section {
+      background-color: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 10px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    }
+
+    .post, .mensaje {
+      background-color: #e6f0ff;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    #estado {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    ul { list-style: none; padding: 0; }
+
   </style>
   <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -15,20 +68,20 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
-  <h1>🚀 Mini Red Social Completa</h1>
+  <h1>🚀 Mini Red Social</h1>
 
   <!-- Registro/Login -->
-  <div>
+  <div class="section">
     <input type="email" id="email" placeholder="Email">
     <input type="password" id="password" placeholder="Password">
     <button onclick="registrar()">Registrar</button>
     <button onclick="login()">Login</button>
     <button onclick="logout()">Logout</button>
+    <p id="estado">No conectado</p>
   </div>
-  <p id="estado">No conectado</p>
 
   <!-- Posts -->
-  <div id="postBox" style="display:none;">
+  <div id="postBox" class="section" style="display:none;">
     <h2>Publicar un post</h2>
     <textarea id="mensaje" placeholder="Escribe un post..."></textarea>
     <button onclick="publicar()">Publicar</button>
@@ -37,7 +90,7 @@
   </div>
 
   <!-- Mensajes privados -->
-  <div id="mensajesBox" style="display:none;">
+  <div id="mensajesBox" class="section" style="display:none;">
     <h2>Mensajes privados</h2>
     <input type="email" id="paraEmail" placeholder="Email destinatario">
     <textarea id="mensajePrivado" placeholder="Escribe tu mensaje..."></textarea>
@@ -69,7 +122,7 @@
     const postsUl = document.getElementById("posts");
     const mensajesUl = document.getElementById("mensajesRecibidos");
 
-    // 🔑 Registro/Login/Logout
+    // Registro/Login/Logout
     async function registrar() {
       try {
         const email = document.getElementById("email").value;
@@ -92,7 +145,7 @@
       auth.signOut();
     }
 
-    // 👀 Detectar usuario activo
+    // Detectar usuario activo
     auth.onAuthStateChanged(user => {
       if(user) {
         estado.textContent = "Conectado como: " + user.email;
@@ -110,7 +163,7 @@
       }
     });
 
-    // ✍️ Posts públicos
+    // Posts públicos
     async function publicar() {
       const mensaje = document.getElementById("mensaje").value.trim();
       if(!mensaje) return;
@@ -137,7 +190,7 @@
         });
     }
 
-    // ✉️ Mensajes privados con caducidad
+    // Mensajes privados con caducidad
     async function enviarMensaje() {
       const de = auth.currentUser.email;
       const para = document.getElementById("paraEmail").value.trim();
@@ -169,7 +222,6 @@
             const data = doc.data();
             mensajes.push({id: doc.id, ...data});
           });
-          // Filtrar los caducados en tiempo real
           const ahora = new Date();
           mensajes
             .filter(m => !m.fechaCaducidad || m.fechaCaducidad.toDate() > ahora)
@@ -183,15 +235,14 @@
         });
     }
 
-    // 🔄 Borrar mensajes caducados automáticamente
+    // Borrar mensajes caducados automáticamente
     async function borrarMensajesCaducados() {
       const ahora = new Date();
       const snapshot = await db.collection("messages")
         .where("fechaCaducidad","<=",ahora)
         .get();
       snapshot.forEach(doc => doc.ref.delete());
-      // Repetir cada minuto
-      setTimeout(borrarMensajesCaducados, 60*1000);
+      setTimeout(borrarMensajesCaducados, 60*1000); // repetir cada minuto
     }
 
   </script>
