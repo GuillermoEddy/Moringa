@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Login - Mini Red Social</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="firebase-config.js"></script>
+
+</head>
+<body>
+  <h1>Login / Registro</h1>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="registrar()">Registrar</button>
+  <button onclick="login()">Login</button>
+
+  <script>
+    async function registrar() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await auth.createUserWithEmailAndPassword(email, password);
+        alert("Usuario registrado ✅");
+      } catch(e){ alert(e.message); }
+    }
+
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        // Redirigir a posts
+        window.location.href = "posts.html";
+      } catch(e){ alert(e.message); }
+    }
+
+    // Si ya está logueado, redirigir
+    auth.onAuthStateChanged(user=>{
+      if(user) window.location.href="posts.html";
+    });
+  </script>
+</body>
+</html>
