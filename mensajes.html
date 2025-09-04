@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Mensajes - Mini Red Social</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="firebase-config.js"></script>
+
+</head>
+<body>
+<h1>Mensajes Privados</h1>
+<button onclick="logout()">Logout</button>
+<input type="email" id="paraEmail" placeholder="Email destinatario">
+<textarea id="mensajePrivado" placeholder="Escribe tu mensaje..."></textarea>
+<button onclick="enviarMensaje()">Enviar mensaje</button>
+<ul id="mensajesRecibidos"></ul>
+<button onclick="window.location.href='posts.html'">Ir a Posts</button>
+
+<script>
+auth.onAuthStateChanged(user=>{
+  if(!user) window.location.href="login.html";
+  else {
+    escucharMensajes(user.email);
+    borrarMensajesCaducados();
+  }
+});
+
+function logout(){ auth.signOut().then(()=>window.location.href="login.html"); }
+
+async function enviarMensaje(){
+  const de = auth.currentUser.email;
+  const para = document.getElementById("paraEmail").value.trim();
+  const contenido = document.getElementById("mensajePrivado").value.trim();
+  if(!para || !contenido) return alert("Completa todos los campos");
+  const ahora = new Date();
+  const caducidad = new Date(ahora.getTime()+5*60*1000);
+  await db.collection("messages").add({
+    de, para, contenido,
+    fecha: firebase.firestore.FieldValue.serverTimestamp(),
+    fechaCaducidad: caducidad
+  });
+  document.getElementById("mensajePrivado").value="";
+  alert("Mensaje enviado ✅");
+}
+
+function escucharMensajes(emailUsuario){
+  db.collection("messages").where("para","==",emailUsuario).onSnapshot(snapshot=>{
+    const mensajesUl=document.getElementById("mensajesRecibidos");
+    mensajesUl.innerHTML="";
+    const mensajes=[];
+    snapshot.forEach(doc=>mensajes.push({id:doc.id,...doc.data()}));
+    const ahora=new Date();
+    mensajes.filter(m=>!m.fechaCaducidad||m.fechaCaducidad.toDate()>ahora)
+      .sort((a,b)=>b.fecha?.seconds - a.fecha?.seconds)
+      .forEach(m=>{
+        const li=document.createElement("li");
+        li.textContent=`${m.de}: ${m.contenido}`;
+        mensajesUl.appendChild(li);
+      });
+  });
+}
+
+async function borrarMensajesCaducados(){
+  const ahora=new Date();
+  const snapshot=await db.collection("messages").where("fechaCaducidad","<=",ahora).get();
+  snapshot.forEach(doc=>doc.ref.delete());
+  setTimeout(borrarMensajesCaducados,60*1000);
+}
+</script>
+</body>
+</html>

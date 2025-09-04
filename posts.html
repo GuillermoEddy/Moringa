@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Posts - Mini Red Social</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="firebase-config.js"></script>
+
+</head>
+<body>
+  <h1>Posts Públicos</h1>
+  <button onclick="logout()">Logout</button>
+  <textarea id="mensaje" placeholder="Escribe un post..."></textarea>
+  <button onclick="publicar()">Publicar</button>
+  <ul id="posts"></ul>
+  <button onclick="window.location.href='mensajes.html'">Ir a Mensajes</button>
+
+<script>
+  auth.onAuthStateChanged(user=>{
+    if(!user) window.location.href="login.html";
+    else escucharPosts();
+  });
+
+  function logout(){ auth.signOut().then(()=>window.location.href="login.html"); }
+
+  async function publicar(){
+    const mensaje = document.getElementById("mensaje").value.trim();
+    if(!mensaje) return;
+    const user = auth.currentUser;
+    await db.collection("posts").add({
+      autor: user.email,
+      mensaje,
+      fecha: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById("mensaje").value = "";
+  }
+
+  function escucharPosts(){
+    db.collection("posts").orderBy("fecha","desc").onSnapshot(snapshot=>{
+      const postsUl = document.getElementById("posts");
+      postsUl.innerHTML="";
+      snapshot.forEach(doc=>{
+        const post=doc.data();
+        const li=document.createElement("li");
+        li.textContent=`${post.autor}: ${post.mensaje}`;
+        postsUl.appendChild(li);
+      });
+    });
+  }
+</script>
+</body>
+</html>
