@@ -4,33 +4,43 @@ body {
   background-color: #121212; /* fondo oscuro */
   color: #fff;
   margin: 0;
-  padding: 20px;
+  padding: 0;
+  display: flex;
+  justify-content: center; /* centrar horizontal */
+  align-items: center;     /* centrar vertical */
+  min-height: 100vh;       /* ocupa toda la altura de la ventana */
 }
 
+/* === SECCIONES === */
+.section {
+  background-color: #1e1e1e; /* sección oscura */
+  padding: 20px;
+  margin: 20px auto;
+  border-radius: 8px;
+  width: 90%;         /* ancho flexible */
+  max-width: 500px;   /* ancho máximo */
+  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* centrar elementos internos */
+}
+
+/* === TITULOS === */
 h1, h2, h3 {
   text-align: center;
   color: #ff6600; /* color principal Poringa */
   margin-bottom: 10px;
 }
 
-.section {
-  background-color: #1e1e1e; /* sección oscura */
-  padding: 20px;
-  margin: 20px auto;
-  border-radius: 8px;
-  max-width: 700px;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.4);
-}
-
 /* === INPUTS Y TEXTAREAS === */
 input, textarea {
   width: 100%;
   padding: 12px;
-  margin: 8px 0;
+  margin: 10px 0;
   border-radius: 6px;
   border: 1px solid #333;
-  background-color: #1a1a1a;
-  color: #fff;
+  background-color: #1a1a1a; /* fondo oscuro */
+  color: #fff;               /* texto blanco */
   font-size: 16px;
   box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
   transition: border 0.3s, background 0.3s;
@@ -39,7 +49,7 @@ input, textarea {
 input:focus, textarea:focus {
   border: 1px solid #ff6600;
   outline: none;
-  background-color: #222;
+  background-color: #222; /* ligeramente más claro */
 }
 
 /* === BOTONES === */
@@ -54,6 +64,8 @@ button {
   cursor: pointer;
   transition: background 0.3s, transform 0.1s, box-shadow 0.2s;
   box-shadow: 0 3px 6px rgba(0,0,0,0.4);
+  margin: 8px 0;
+  width: 100%;
 }
 
 button:hover {
@@ -76,6 +88,7 @@ button:active {
   border-left: 4px solid #ff6600;
   word-wrap: break-word;
   box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  width: 100%;
 }
 
 /* === LISTAS CON SCROLL === */
@@ -84,7 +97,8 @@ button:active {
   overflow-y: auto;
   padding: 0;
   list-style: none;
-  margin: 0;
+  margin: 10px 0;
+  width: 100%;
 }
 
 /* === ESTADO DEL USUARIO === */
@@ -106,7 +120,7 @@ a:hover {
   color: #e55a00;
 }
 
-/* === DETALLES EXTRA === */
+/* === SCROLL PERSONALIZADO === */
 ::-webkit-scrollbar {
   width: 8px;
 }
