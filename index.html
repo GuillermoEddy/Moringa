@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mini Red Social</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <h1>Mini Red Social 🚀</h1>
+
+  <div id="auth">
+    <input type="email" id="email" placeholder="Correo">
+    <input type="password" id="password" placeholder="Contraseña">
+    <button id="loginBtn">Iniciar Sesión</button>
+    <button id="registerBtn">Registrarse</button>
+    <button id="logoutBtn" style="display:none;">Salir</button>
+  </div>
+
+  <div id="postArea" style="display:none;">
+    <textarea id="postText" placeholder="Escribe algo..."></textarea>
+    <button id="postBtn">Publicar</button>
+  </div>
+
+  <h2>Posts</h2>
+  <div id="posts"></div>
+</body>
+</html>
