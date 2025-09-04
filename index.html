@@ -3,31 +3,129 @@
 <head>
   <meta charset="UTF-8">
   <title>Mini Red Social</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- Importa los SDKs directamente -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-  <script type="module" src="app.js"></script>
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
-  <h1>Mini Red Social 🚀</h1>
+  <h1>🚀 Mini Red Social</h1>
 
-  <div id="auth">
-    <input type="email" id="email" placeholder="Correo">
-    <input type="password" id="password" placeholder="Contraseña">
-    <button id="loginBtn">Iniciar Sesión</button>
-    <button id="registerBtn">Registrarse</button>
-    <button id="logoutBtn" style="display:none;">Salir</button>
+  <!-- Registro/Login -->
+  <div>
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="registrar()">Registrar</button>
+    <button onclick="login()">Login</button>
+    <button onclick="logout()">Logout</button>
   </div>
 
-  <div id="postArea" style="display:none;">
-    <textarea id="postText" placeholder="Escribe algo..."></textarea>
-    <button id="postBtn">Publicar</button>
+  <p id="estado">No conectado</p>
+
+  <!-- Crear post -->
+  <div id="postBox" style="display:none;">
+    <textarea id="mensaje" placeholder="Escribe un post..."></textarea>
+    <button onclick="publicar()">Publicar</button>
   </div>
 
-  <h2>Posts</h2>
-  <div id="posts"></div>
+  <!-- Lista de posts -->
+  <h2>Posts:</h2>
+  <ul id="posts"></ul>
+
+  <script>
+    // ⚡ Configuración de tu proyecto Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyBpku94Ge1DGotBTLk-rYdY1zyQUvEYuMY",
+      authDomain: "moringa-85b1f.firebaseapp.com",
+      projectId: "moringa-85b1f",
+      storageBucket: "moringa-85b1f.appspot.com", // corregido
+      messagingSenderId: "40668368704",
+      appId: "1:40668368704:web:142dabce23add5de39b4a5",
+      measurementId: "G-G2LFXD4BTF"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Referencias a elementos
+    const estado = document.getElementById("estado");
+    const postBox = document.getElementById("postBox");
+    const postsUl = document.getElementById("posts");
+
+    // 🔑 Registro
+    async function registrar() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await auth.createUserWithEmailAndPassword(email, password);
+        alert("Usuario registrado ✅");
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    }
+
+    // 🔑 Login
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        alert("Login exitoso ✅");
+      } catch (err) {
+        alert("Error: " + err.message);
+      }
+    }
+
+    // 🔑 Logout
+    function logout() {
+      auth.signOut();
+    }
+
+    // 👀 Detectar usuario activo
+    auth.onAuthStateChanged(user => {
+      if (user) {
+        estado.textContent = "Conectado como: " + user.email;
+        postBox.style.display = "block";
+        escucharPosts(); // activar listener de posts
+      } else {
+        estado.textContent = "No conectado";
+        postBox.style.display = "none";
+        postsUl.innerHTML = "";
+      }
+    });
+
+    // ✍️ Publicar post
+    async function publicar() {
+      const mensaje = document.getElementById("mensaje").value;
+      if (mensaje.trim() === "") return;
+
+      const user = auth.currentUser;
+      if (!user) return alert("Debes estar logueado para publicar");
+
+      await db.collection("posts").add({
+        autor: user.email,
+        mensaje: mensaje,
+        fecha: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      document.getElementById("mensaje").value = "";
+    }
+
+    // 📡 Escuchar posts en tiempo real
+    function escucharPosts() {
+      db.collection("posts").orderBy("fecha", "desc")
+        .onSnapshot(snapshot => {
+          postsUl.innerHTML = "";
+          snapshot.forEach(doc => {
+            const post = doc.data();
+            const li = document.createElement("li");
+            li.textContent = `${post.autor}: ${post.mensaje}`;
+            postsUl.appendChild(li);
+          });
+        });
+    }
+  </script>
 </body>
 </html>
-
