@@ -1,27 +1,23 @@
-// Importar Firebase (cargar desde CDN)
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
-// Import the functions you need from the SDKs you need
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// 🚨 tu configuración corregida
 const firebaseConfig = {
   apiKey: "AIzaSyBpku94Ge1DGotBTLk-rYdY1zyQUvEYuMY",
   authDomain: "moringa-85b1f.firebaseapp.com",
   projectId: "moringa-85b1f",
-  storageBucket: "moringa-85b1f.firebasestorage.app",
+  storageBucket: "moringa-85b1f.appspot.com",
   messagingSenderId: "40668368704",
   appId: "1:40668368704:web:142dabce23add5de39b4a5",
   measurementId: "G-G2LFXD4BTF"
 };
 
-// Initialize Firebase
+// Inicializar
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
 
 // Referencias HTML
 const emailInput = document.getElementById("email");
@@ -98,6 +94,4 @@ function cargarPosts() {
       postsDiv.appendChild(div);
     });
   });
-}
-
 }
