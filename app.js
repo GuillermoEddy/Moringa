@@ -1,6 +1,8 @@
+// Importar Firebase (cargar desde CDN)
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-auth.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.5.2/firebase-firestore.js";
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -18,12 +20,10 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// 🔹 Referencias a elementos HTML
+// Referencias HTML
 const emailInput = document.getElementById("email");
 const passInput = document.getElementById("password");
 const loginBtn = document.getElementById("loginBtn");
@@ -34,21 +34,29 @@ const postText = document.getElementById("postText");
 const postBtn = document.getElementById("postBtn");
 const postsDiv = document.getElementById("posts");
 
-// 🔹 Autenticación
-registerBtn.onclick = () => {
-  auth.createUserWithEmailAndPassword(emailInput.value, passInput.value)
-    .catch(err => alert(err.message));
+// Registro
+registerBtn.onclick = async () => {
+  try {
+    await createUserWithEmailAndPassword(auth, emailInput.value, passInput.value);
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
-loginBtn.onclick = () => {
-  auth.signInWithEmailAndPassword(emailInput.value, passInput.value)
-    .catch(err => alert(err.message));
+// Login
+loginBtn.onclick = async () => {
+  try {
+    await signInWithEmailAndPassword(auth, emailInput.value, passInput.value);
+  } catch (err) {
+    alert(err.message);
+  }
 };
 
-logoutBtn.onclick = () => auth.signOut();
+// Logout
+logoutBtn.onclick = () => signOut(auth);
 
-// 🔹 Cambios de sesión
-auth.onAuthStateChanged(user => {
+// Detectar sesión
+onAuthStateChanged(auth, (user) => {
   if (user) {
     postArea.style.display = "block";
     logoutBtn.style.display = "inline";
@@ -64,29 +72,32 @@ auth.onAuthStateChanged(user => {
   }
 });
 
-// 🔹 Publicar
-postBtn.onclick = () => {
+// Publicar post
+postBtn.onclick = async () => {
   const user = auth.currentUser;
   if (user && postText.value.trim() !== "") {
-    db.collection("posts").add({
+    await addDoc(collection(db, "posts"), {
       autor: user.email,
       contenido: postText.value,
-      fecha: new Date()
+      fecha: serverTimestamp()
     });
     postText.value = "";
   }
 };
 
-// 🔹 Mostrar posts en tiempo real
+// Cargar posts en tiempo real
 function cargarPosts() {
-  db.collection("posts").orderBy("fecha", "desc").onSnapshot(snapshot => {
+  const q = query(collection(db, "posts"), orderBy("fecha", "desc"));
+  onSnapshot(q, (snapshot) => {
     postsDiv.innerHTML = "";
     snapshot.forEach(doc => {
       const p = doc.data();
       const div = document.createElement("div");
       div.className = "post";
-      div.innerHTML = `<b>${p.autor}</b><br>${p.contenido}<br><small>${p.fecha.toDate()}</small>`;
+      div.innerHTML = `<b>${p.autor}</b><br>${p.contenido}<br><small>${p.fecha?.toDate?.() || ""}</small>`;
       postsDiv.appendChild(div);
     });
   });
+}
+
 }
