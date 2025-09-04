@@ -2,11 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Red Social Completa</title>
+  <title>Mini Red Social Completa - Mensajes Temporales</title>
   <style>
     body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; }
-    textarea { width: 100%; height: 50px; }
-    input, textarea, button { margin: 5px 0; }
+    input, textarea, button { margin: 5px 0; width: 100%; }
     .post, .mensaje { border: 1px solid #ccc; padding: 5px; margin: 5px 0; border-radius: 5px; }
     #mensajesRecibidos li { list-style: none; margin: 5px 0; }
   </style>
@@ -68,6 +67,7 @@
     const postBox = document.getElementById("postBox");
     const mensajesBox = document.getElementById("mensajesBox");
     const postsUl = document.getElementById("posts");
+    const mensajesUl = document.getElementById("mensajesRecibidos");
 
     // 🔑 Registro/Login/Logout
     async function registrar() {
@@ -100,12 +100,13 @@
         mensajesBox.style.display = "block";
         escucharPosts();
         escucharMensajes(user.email);
+        borrarMensajesCaducados();
       } else {
         estado.textContent = "No conectado";
         postBox.style.display = "none";
         mensajesBox.style.display = "none";
         postsUl.innerHTML = "";
-        document.getElementById("mensajesRecibidos").innerHTML = "";
+        mensajesUl.innerHTML = "";
       }
     });
 
@@ -116,7 +117,7 @@
       const user = auth.currentUser;
       await db.collection("posts").add({
         autor: user.email,
-        mensaje: mensaje,
+        mensaje,
         fecha: firebase.firestore.FieldValue.serverTimestamp()
       });
       document.getElementById("mensaje").value = "";
@@ -136,42 +137,61 @@
         });
     }
 
-    // ✉️ Mensajes privados
+    // ✉️ Mensajes privados con caducidad
     async function enviarMensaje() {
       const de = auth.currentUser.email;
       const para = document.getElementById("paraEmail").value.trim();
       const contenido = document.getElementById("mensajePrivado").value.trim();
       if(!para || !contenido) return alert("Completa todos los campos");
 
-      const docRef = await db.collection("messages").add({
-        de, para, contenido,
-        fecha: firebase.firestore.FieldValue.serverTimestamp()
+      const ahora = new Date();
+      const caducidad = new Date(ahora.getTime() + 5*60*1000); // 5 minutos
+
+      await db.collection("messages").add({
+        de,
+        para,
+        contenido,
+        fecha: firebase.firestore.FieldValue.serverTimestamp(),
+        fechaCaducidad: caducidad
       });
 
       document.getElementById("mensajePrivado").value = "";
-
-      // Borrar mensaje automáticamente después de 5 minutos
-      setTimeout(async () => {
-        const snap = await docRef.get();
-        if(snap.exists) await docRef.delete();
-      }, 5*60*1000);
+      alert("Mensaje enviado ✅");
     }
 
     function escucharMensajes(emailUsuario) {
       db.collection("messages")
         .where("para","==",emailUsuario)
-        .orderBy("fecha","desc")
         .onSnapshot(snapshot => {
-          const ul = document.getElementById("mensajesRecibidos");
-          ul.innerHTML = "";
+          mensajesUl.innerHTML = "";
+          const mensajes = [];
           snapshot.forEach(doc => {
-            const msg = doc.data();
-            const li = document.createElement("li");
-            li.className = "mensaje";
-            li.textContent = `${msg.de}: ${msg.contenido}`;
-            ul.appendChild(li);
+            const data = doc.data();
+            mensajes.push({id: doc.id, ...data});
           });
+          // Filtrar los caducados en tiempo real
+          const ahora = new Date();
+          mensajes
+            .filter(m => !m.fechaCaducidad || m.fechaCaducidad.toDate() > ahora)
+            .sort((a,b) => b.fecha?.seconds - a.fecha?.seconds)
+            .forEach(m => {
+              const li = document.createElement("li");
+              li.className = "mensaje";
+              li.textContent = `${m.de}: ${m.contenido}`;
+              mensajesUl.appendChild(li);
+            });
         });
+    }
+
+    // 🔄 Borrar mensajes caducados automáticamente
+    async function borrarMensajesCaducados() {
+      const ahora = new Date();
+      const snapshot = await db.collection("messages")
+        .where("fechaCaducidad","<=",ahora)
+        .get();
+      snapshot.forEach(doc => doc.ref.delete());
+      // Repetir cada minuto
+      setTimeout(borrarMensajesCaducados, 60*1000);
     }
 
   </script>
